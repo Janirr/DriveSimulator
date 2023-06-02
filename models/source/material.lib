@@ -1,0 +1,637 @@
+# Aspose.3D Wavefront OBJ Exporter
+# Copyright 2004-2023 Aspose Pty Ltd.
+# File created: 06/02/2023 14:54:43
+
+newmtl Material.008
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl Material.006
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material.006
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material.006
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material.006
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material.007
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.80000001192092896
+	d 1
+	Tr 0
+newmtl Material.009
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.80000001192092896
+	d 1
+	Tr 0
+newmtl Material.011
+	illum 2
+	Kd 0.02138833329081535 0.02138833329081535 0.02138833329081535
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.006
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.89999997615814208
+	d 1
+	Tr 0
+newmtl Material.012
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.80000001192092896
+	d 1
+	Tr 0
+newmtl Material
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl Material.014
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.79586780071258544
+	d 1
+	Tr 0
+newmtl Material.015
+	illum 2
+	Kd 0.03310172632336616 0.01921605132520198 0.0122828809544444
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.016
+	illum 2
+	Kd 0.084181047976017 0.084181047976017 0.084181047976017
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.021
+	illum 2
+	Kd 0.10504785180091858 0.10504785180091858 0.10504785180091858
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.017
+	illum 2
+	Kd 0.00955807417631149 0.00955807417631149 0.00955807417631149
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.020
+	illum 2
+	Kd 0.25232592225074768 0.25232592225074768 0.25232592225074768
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.026
+	illum 2
+	Kd 0.13286395370960236 0.13286395370960236 0.13286395370960236
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.024
+	illum 2
+	Kd 0.07174441963434219 0.07174441963434219 0.07174441963434219
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.028
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.030
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.80000001192092896
+	d 1
+	Tr 0
+newmtl Material.029
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.033
+	illum 2
+	Kd 0.60105466842651368 0.71168267726898192 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.031
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.031
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.031
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.065
+	illum 2
+	Kd 0.11781809478998184 0.11781809478998184 0.11781809478998184
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl Material.051
+	illum 2
+	Kd 0.01183310523629188 0.01183310523629188 0.01183310523629188
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0.51851850748062136
+	d 1
+	Tr 0
+newmtl Material.155
+	illum 2
+	Kd 0.02090408280491829 0.0201425664126873 0.01967061124742031
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl amg logo
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_2.png
+newmtl iwc_sponsor (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_3.png
+newmtl iwc_sponsor (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_3.png
+newmtl INEOS (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0.69999992847442624 0.69999992847442624 0.69999992847442624
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_4.png
+newmtl INEOS (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0.69999992847442624 0.69999992847442624 0.69999992847442624
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_4.png
+newmtl amd_png
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_5.png
+newmtl amg logo
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_2.png
+newmtl amd_png
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_5.png
+newmtl petronas_png
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_6.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl petronas_png
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_6.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl 44_lewis
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_8.png
+newmtl 44_lewis
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_8.png
+newmtl 44_lewis
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_8.png
+newmtl sndg_bw (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_9.png
+newmtl sndg_bw (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_9.png
+newmtl petronas_png
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_6.png
+newmtl Material.031
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl akkodis
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_10.png
+newmtl Mercedes-Logo
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_11.png
+newmtl Mercedes-Logo
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_11.png
+newmtl petronas_logo
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_12.png
+newmtl sndg_bw (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_9.png
+newmtl sndg_bw (1)
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_9.png
+newmtl stynium
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_13.png
+newmtl crowdstrike
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_14.png
+newmtl crowdstrike
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_14.png
+newmtl crowdstrike
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_14.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl teamviewer
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_7.png
+newmtl Material
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl Material
+	illum 2
+	Kd 0 0 0
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png
+newmtl pirelli
+	illum 2
+	Kd 1 1 1
+	Ke 0 0 0
+	Pr 0.5
+	Pm 0
+	d 1
+	Tr 0
+	map_Kd texture_1.png

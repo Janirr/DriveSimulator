@@ -1,0 +1,11 @@
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win\x64\Debug\bio_szkielet_07_win.exe
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win_2\x64\Debug\bio_szkielet_07_win.vcxproj.CopyComplete
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win_2\x64\Debug\bio_szkielet_07_win.exe
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win_2\x64\Debug\assimp-vc143-mtd.dll
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win_2\x64\Debug\zlibd1.dll
+C:\Users\Janir\OneDrive - put.poznan.pl\Dokumenty\Studia\semestr 4\Grafika Komputerowa i Wizualizacja\bio_szkielet_07_win_2\x64\Debug\pugixml.dll
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\bio_szkielet_07_win.vcxproj.CopyComplete
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\bio_szkielet_07_win.exe
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\assimp-vc143-mtd.dll
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\zlibd1.dll
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\pugixml.dll
