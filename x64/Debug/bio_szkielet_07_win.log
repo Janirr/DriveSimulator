@@ -3,10 +3,9 @@ C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(133,20):
 C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(142,21): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
 C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(155,21): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
 C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(157,22): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(234,99): warning C4267: "argument": konwersja z "size_t" do "GLsizei", możliwa utrata danych
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(330,20): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(331,19): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(332,19): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(333,18): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(334,16): warning C4244: "=": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(237,99): warning C4267: "argument": konwersja z "size_t" do "GLsizei", możliwa utrata danych
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(333,23): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(334,36): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(335,19): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\main_file.cpp(336,37): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
   bio_szkielet_07_win.vcxproj -> C:\Users\Janir\OneDrive - put.poznan.pl\Pulpit\projekt2_0\x64\Debug\bio_szkielet_07_win.exe

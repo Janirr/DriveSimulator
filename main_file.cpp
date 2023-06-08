@@ -62,15 +62,15 @@ bool isDecelerating = false;
 double acceleration = 0.2f;
 double backAcceleration = 0.1f;
 double noGasDeceleration = 0.05f;
-double deceleration = 0.3f;
+double deceleration = 0.8f;
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_LEFT) {
-		if (action == GLFW_PRESS) angle_y = 0.5f;
+		if (action == GLFW_PRESS) angle_y = 1.8f;
 		else if (action == GLFW_RELEASE) angle_y = 0;
 	}
 	if (key == GLFW_KEY_RIGHT) {
-		if (action == GLFW_PRESS) angle_y = -0.5f;
+		if (action == GLFW_PRESS) angle_y = -1.8f;
 		else if (action == GLFW_RELEASE) angle_y = 0;
 	}
 	if (key == GLFW_KEY_UP) {
@@ -228,6 +228,9 @@ void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models,
 		glEnableVertexAttribArray(spLambertTextured->a("texCoord"));  // Włącz atrybut texCoord
 		glVertexAttribPointer(spLambertTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
 		glActiveTexture(GL_TEXTURE0);
+		glTexParameteri(GL_TEXTURE_2D,
+			GL_TEXTURE_WRAP_S,
+			GL_MIRRORED_REPEAT);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glUniform1i(spLambertTextured->u("tex"), 0);
@@ -251,21 +254,21 @@ void printMatrix(const glm::mat4& matrix) {
 }
 
 //Procedura rysująca zawartość sceny
-void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float angle_y, std::vector<Model> floor, std::vector<Model> car) {
+void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float carAngle, std::vector<Model> floor, std::vector<Model> car) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Wyczyść bufor koloru i bufor głębokości
 	glm::vec3 lookPoint = glm::vec3(carX + cameraDistance, carY, carZ);
+	glm::vec3 cameraPosition = glm::vec3(carX, cameraHeight, carZ);
 	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f); //Wylicz macierz rzutowania
 	glm::mat4 V = glm::lookAt(
-		glm::vec3(carX, cameraHeight, carZ),  // Pozycja kamery NIE GIT
+		cameraPosition,  // Pozycja kamery NIE GIT
 		lookPoint,
 		glm::vec3(0, 1, 0));
+
 	// Rysowanie samochodu
 	glm::mat4 M = glm::mat4(1.0f);
 	M = glm::translate(M, lookPoint);
-	//V = glm::rotate(M, angle_y, glm::vec3(0, 1, 0));
-	M = glm::rotate(M, PI/2+angle_y, glm::vec3(0, 1, 0));
+	M = glm::rotate(M, PI/2+carAngle, glm::vec3(0, 1, 0));
 	drawModel(P, V, M, car, carTexture);
-	//kostka(P, V, M);
 	
 	// Rysowanie terenu
 	M = glm::mat4(1.0f); //Macierz jednostkowa
@@ -301,10 +304,9 @@ int main(void)
 	float carX = 0; 
 	float carY = 0; 
 	float carZ = 0;
-	float tmp = 0;
-	float tmp_pi = 0;
+	float carAngle = 0;
 	std::vector<Model> floor = loadModel("models/test3.obj");
-	std::vector<Model> car = loadModel("models/source/mercedesf1.obj");
+	std::vector<Model> car = loadModel("models/car.obj");
 	double prevTime = glfwGetTime();
 
 	//Główna pętla
@@ -327,14 +329,15 @@ int main(void)
 				carSpeed += backAcceleration;
 			}
 		}
-		carX += carSpeed * glfwGetTime();
+		// Wyliczamy X i Z
+		carAngle += angle_y * glfwGetTime();
+		carX += carSpeed * cos(carAngle) * glfwGetTime();
 		carY += speed_y * glfwGetTime();
-		carZ += speed_z * glfwGetTime();
-		tmp += angle_y * glfwGetTime();
-		tmp_pi = tmp / 3.14;
+		carZ += carSpeed * sin(-carAngle) * glfwGetTime();
+		std::cout << carX << " " << carY << " " << carZ << " || " << carSpeed << std::endl;
+		
 		glfwSetTime(0); // Zeruj timer
-		std::cout << carSpeed << std::endl;
-		drawScene(window, carX, carY, carZ, tmp, floor, car); // Wykonaj procedurę rysującą
+		drawScene(window, carX, carY, carZ, carAngle, floor, car); // Wykonaj procedurę rysującą
 		glfwPollEvents(); // Wykonaj procedury callback w zależności od zdarzeń jakie zaszły.
 	}
 
