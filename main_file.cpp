@@ -42,33 +42,36 @@ GLuint tex;
 float speed_x = 0;
 float speed_y = 0;
 float speed_z = 0;
-
-//Normalnie użyć klasy 3D z atrybutami. Tutaj uproszczone
-std::vector<glm::vec4> vertss;
-std::vector<glm::vec4> colorss;
-std::vector<glm::vec4> normalss;
-std::vector<glm::vec2> texCoordss;
-std::vector<unsigned int> indicess;
+float angle_y = 0;
+float speed = 25;
+// Camera
+float cameraDistance = 20;
+float cameraAngle = 0;
+float cameraHeight = 5;
 
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
 }
 
+
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
-		if (key == GLFW_KEY_LEFT) speed_x = -50;
-		if (key == GLFW_KEY_RIGHT) speed_x = 50;
-		if (key == GLFW_KEY_UP) speed_z = 50;
-		if (key == GLFW_KEY_DOWN) speed_z = -50;
-		if (key == GLFW_KEY_X) speed_y = -50;
-		if (key == GLFW_KEY_Z) speed_y = 50;
+		if (key == GLFW_KEY_LEFT) { speed_z = speed; angle_y = 0.5f; }// tutaj obrocw lewo
+		if (key == GLFW_KEY_RIGHT){ speed_z = -speed; angle_y = -0.5f; }// tutaj obroc w prawo
+		if (key == GLFW_KEY_UP) speed_x = -speed;
+		if (key == GLFW_KEY_DOWN) speed_x = speed;
+		if (key == GLFW_KEY_X) speed_y = -speed;
+		if (key == GLFW_KEY_Z) speed_y = speed;
+		if (key == GLFW_KEY_KP_SUBTRACT) cameraDistance -= 5;
+		if (key == GLFW_KEY_KP_ADD) cameraDistance += 5;
 	}
 	if (action == GLFW_RELEASE) {
-		if (key == GLFW_KEY_LEFT) speed_x = 0;
-		if (key == GLFW_KEY_RIGHT) speed_x = 0;
-		if (key == GLFW_KEY_UP) speed_z = 0;
-		if (key == GLFW_KEY_DOWN) speed_z = 0;
+		if (key == GLFW_KEY_LEFT) speed_z = 0; angle_y = 0;
+		if (key == GLFW_KEY_RIGHT) speed_z = 0; angle_y = 0;
+		if (key == GLFW_KEY_UP) speed_x = 0;
+		if (key == GLFW_KEY_DOWN) speed_x = 0;
 		if (key == GLFW_KEY_X) speed_y = 0;
 		if (key == GLFW_KEY_Z) speed_y = 0;
 	}
@@ -97,60 +100,68 @@ GLuint readTexture(const char* filename) {
 	return tex;
 }
 
-void loadModel(std::string plik) {
-	using namespace std;
+class Model {
+public:
+	std::vector<glm::vec4> verts;
+	std::vector<glm::vec4> colors;
+	std::vector<glm::vec4> normals;
+	std::vector<glm::vec2> texCoords;
+	std::vector<unsigned int> indices;
+};
 
+std::vector<Model> loadModel(std::string plik) 
+{
+	using namespace std;
+	vector <Model> models;
+	
+	vector<glm::vec4> modelVerts;
+	vector<glm::vec4> modelColors;
+	vector<glm::vec4> modelNormals;
+	vector<glm::vec2> modelTexCoords;
+	vector<unsigned int> modelIndices;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(plik, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
-	cout << importer.GetErrorString() << endl;
-	cout << "Meshes: " << scene->mNumMeshes << endl;
-	cout << "Materials: " << scene->mNumMaterials << endl;
-	cout << "Textures: " << scene->mNumTextures << endl;
-	cout << "Lights: " << scene->mNumLights << endl;
-	cout << "Cameras: " << scene->mNumCameras << endl;
-
-	for (int k = 0; k < scene->mNumMeshes; k++) {
-
+	cout << importer.GetErrorString() << endl << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
+	
+	for (int k = 0; k < scene->mNumMeshes; k++) 
+	{
+		Model model;
 		aiMesh* mesh = scene->mMeshes[k];
-		cout << "Vertices: " << mesh->mNumVertices << endl;
-		cout << "Faces: " << mesh->mNumFaces << endl;
-		cout << "Texture channels: " << mesh->GetNumUVChannels() << endl;
-		cout << "Color channels: " << mesh->GetNumColorChannels() << endl;
-		for (int i = 0; i < mesh->mNumVertices; i++) {
+		//cout << "Vertices: " << mesh->mNumVertices << endl << "Faces: " << mesh->mNumFaces << endl << "Texture channels: " << mesh->GetNumUVChannels() << endl << "Color channels: " << mesh->GetNumColorChannels() << endl;
+		for (int i = 0; i < mesh->mNumVertices; i++) 
+		{
 			aiVector3D vertex = mesh->mVertices[i]; // aiVector3D podobny do glm::vec3
-			vertss.push_back(glm::vec4(vertex.x, vertex.y, vertex.z, 1));
-
+			modelVerts.push_back(glm::vec4(vertex.x, vertex.y, vertex.z, 1));
 			aiVector3D normal = mesh->mNormals[i]; // Wektory znormalizowane
-			normalss.push_back(glm::vec4(normal.x, normal.y, normal.z, 0)); // 0, bo wektor
-
+			modelNormals.push_back(glm::vec4(normal.x, normal.y, normal.z, 0)); // 0, bo wektor
 			unsigned int liczba_zest = mesh->GetNumUVChannels(); // liczba zdefiniowanych zestawów wsp. teksturowania (zestawów jest max 8)
 			unsigned int wymiar_wsp_tex = mesh->mNumUVComponents[0]; // Liczba składowych wsp. teksturowania dla 0 zestawu.
-
-			if (liczba_zest > 0 && wymiar_wsp_tex > 0) {
+			if (liczba_zest > 0 && wymiar_wsp_tex > 0) 
+			{
 				aiVector3D texCoord = mesh->mTextureCoords[0][i]; // 0 to numer zestawu współrzędnych teksturowania
-				texCoordss.push_back(glm::vec2(texCoord.x, texCoord.y)); // x,y,z wykorzystywane jako u,v,w. 0 jeżeli tekstura ma mniej wymiarów
-			}
-
-			// Dodaj kolory
-			if (mesh->HasVertexColors(0)) {
-				aiColor4D color = mesh->mColors[0][i];
-				colorss.push_back(glm::vec4(color.r, color.g, color.b, color.a));
-			}
-			else {
-				colorss.push_back(glm::vec4(1, 1, 1, 1));
+				modelTexCoords.push_back(glm::vec2(texCoord.x, texCoord.y)); // x,y,z wykorzystywane jako u,v,w. 0 jeżeli tekstura ma mniej wymiarów
 			}
 		}
 
 		//dla każdego wielokąta składowego
-		for (int i = 0; i < mesh->mNumFaces; i++) {
+		for (int i = 0; i < mesh->mNumFaces; i++) 
+		{
 			aiFace& face = mesh->mFaces[i]; //face to jeden z wielokątów siatki
 			//dla każdego indeksu->wierzchołka tworzącego wielokąt
 			//dla aiProcess_Triangulate to zawsze będzie 3
-			for (int j = 0; j < face.mNumIndices; j++) {
-				indicess.push_back(face.mIndices[j]);
+			for (int j = 0; j < face.mNumIndices; j++) 
+			{
+				modelIndices.push_back(face.mIndices[j]);
 			}
 		}
+		model.verts = modelVerts;
+		model.colors = modelColors;
+		model.normals = modelNormals;
+		model.texCoords = modelTexCoords;
+		model.indices = modelIndices;
+		models.push_back(model);
 	}
+	return models;
 }
 
 void windowResizeCallback(GLFWwindow* window, int width, int height) {
@@ -166,9 +177,8 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glClearColor(0, 0, 0, 1); //Ustaw kolor czyszczenia bufora kolorów
 	glEnable(GL_DEPTH_TEST); //Włącz test głębokości na pikselach
 	glfwSetKeyCallback(window, keyCallback);
-	tex = readTexture("models/textures/gradient.png");
-	loadModel("models/source/mercedesf1.obj");
-	std::cout << indicess.size();
+	glfwSetWindowSizeCallback(window, windowResizeCallback);
+	tex = readTexture("models/textures/trasa.png");
 }
 
 
@@ -199,45 +209,66 @@ void kostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 	glDisableVertexAttribArray(spColored->a("color"));
 }
 
-void testModel(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
+void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models) {
 	spTextured->use();
-	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
-	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
-	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
-	// Przypisz dane
-	glEnableVertexAttribArray(spTextured->a("vertex"));  // Włącz atrybut vertex
-	glVertexAttribPointer(spTextured->a("vertex"), 4, GL_FLOAT, false, 0, vertss.data()); 
-	glEnableVertexAttribArray(spTextured->a("normal"));  // Włącz atrybut normal
-	glVertexAttribPointer(spTextured->a("normal"), 4, GL_FLOAT, false, 0, normalss.data());
-	glEnableVertexAttribArray(spTextured->a("texCoord"));  // Włącz atrybut texCoord
-	glVertexAttribPointer(spTextured->a("texCoord"), 2, GL_FLOAT, false, 0, texCoordss.data());
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glUniform1i(spTextured->u("tex"), 0);
-	glDrawElements(GL_TRIANGLES, indicess.size(), GL_UNSIGNED_INT, indicess.data());
-	// Clear vertex attribute state
-	glDisableVertexAttribArray(spTextured->a("vertex"));  // Disable vertex attribute
-	glDisableVertexAttribArray(spTextured->a("normal"));  // Disable normal attribute
-	glDisableVertexAttribArray(spTextured->a("texCoord"));  // Disable normal attribute
+	std::cout << models.size() << std::endl;
+	for (int i = 0; i < models.size(); i++) 
+	{
+		glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
+		glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
+		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
+		// Przypisz dane
+		glEnableVertexAttribArray(spTextured->a("vertex"));  // Włącz atrybut vertex
+		glVertexAttribPointer(spTextured->a("vertex"), 4, GL_FLOAT, false, 0, models[i].verts.data());
+		glEnableVertexAttribArray(spTextured->a("normal"));  // Włącz atrybut normal
+		glVertexAttribPointer(spTextured->a("normal"), 4, GL_FLOAT, false, 0, models[i].normals.data());
+		glEnableVertexAttribArray(spTextured->a("texCoord"));  // Włącz atrybut texCoord
+		glVertexAttribPointer(spTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glUniform1i(spTextured->u("tex"), 0);
+		glDrawElements(GL_TRIANGLES, models[i].indices.size(), GL_UNSIGNED_INT, models[i].indices.data());
+		// Clear vertex attribute state
+		glDisableVertexAttribArray(spTextured->a("vertex"));  // Disable vertex attribute
+		glDisableVertexAttribArray(spTextured->a("normal"));  // Disable normal attribute
+		glDisableVertexAttribArray(spTextured->a("texCoord"));  // Disable normal attribute
+	}
+	
 }
 
+void printMatrix(const glm::mat4& matrix) {
+	std::cout << "--------------" << std::endl;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			std::cout << matrix[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+}
 
 //Procedura rysująca zawartość sceny
-void drawScene(GLFWwindow* window, float camera_x, float camera_y, float camera_z) {
-	//************Tutaj umieszczaj kod rysujący obraz******************l
+void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float angle_y, std::vector<Model> floor, std::vector<Model> car) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Wyczyść bufor koloru i bufor głębokości
-	
-	glm::mat4 V = glm::lookAt(
-		glm::vec3(camera_x, camera_y, camera_z),  // Pozycja kamery
-		glm::vec3(0, 0, 0),  // Punkt patrzenia
-		glm::vec3(0, 1, 0));  // Wektor wskazujący górę
+	glm::vec3 lookPoint = glm::vec3(carX - cameraDistance, carY, carZ);
 	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f); //Wylicz macierz rzutowania
+	glm::mat4 V = glm::lookAt(
+		glm::vec3(carX, cameraHeight, carZ),  // Pozycja kamery
+		lookPoint,  // Punkt patrzenia
+		glm::vec3(0, 1, 0));
+	// Rysowanie kostki
 	glm::mat4 M = glm::mat4(1.0f);
-
-	kostka(P, V, M);
-	testModel(P, V, M);
-
+	M = glm::translate(M, lookPoint);
+	//V = glm::rotate(M, angle_y, glm::vec3(0, 1, 0));
+	M = glm::rotate(M, -PI/2+angle_y, glm::vec3(0, 1, 0));
+	
+	//printMatrix(M);
+	drawModel(P, V, M, car);
+	//kostka(P, V, M);
+	// Rysowanie terenu
+	M = glm::mat4(1.0f); //Macierz jednostkowa
+	M = glm::translate(M, glm::vec3(0, -3, 0)); // OBNIZENIE POZIOMU TERENU
+	drawModel(P, V, M, floor); //Rysowanie terenu
 	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego
 }
 
@@ -245,46 +276,47 @@ void drawScene(GLFWwindow* window, float camera_x, float camera_y, float camera_
 int main(void)
 {
 	GLFWwindow* window; //Wskaźnik na obiekt reprezentujący okno
-
 	glfwSetErrorCallback(error_callback);//Zarejestruj procedurę obsługi błędów
-
 	if (!glfwInit()) { //Zainicjuj bibliotekę GLFW
 		fprintf(stderr, "Nie można zainicjować GLFW.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	window = glfwCreateWindow(500, 500, "OpenGL", NULL, NULL);  //Utwórz okno 500x500 o tytule "OpenGL" i kontekst OpenGL.
-
+	window = glfwCreateWindow(800, 800, "Drive Simulator", NULL, NULL);  //Utwórz okno 500x500 o tytule "OpenGL" i kontekst OpenGL.
 	if (!window) //Jeżeli okna nie udało się utworzyć, to zamknij program
 	{
 		fprintf(stderr, "Nie można utworzyć okna.\n");
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
-
 	glfwMakeContextCurrent(window); //Od tego momentu kontekst okna staje się aktywny i polecenia OpenGL będą dotyczyć właśnie jego.
 	glfwSwapInterval(1); //Czekaj na 1 powrót plamki przed pokazaniem ukrytego bufora
-
 	if (glewInit() != GLEW_OK) { //Zainicjuj bibliotekę GLEW
 		fprintf(stderr, "Nie można zainicjować GLEW.\n");
 		exit(EXIT_FAILURE);
 	}
-
 	initOpenGLProgram(window); //Operacje inicjujące
-
+	
+	float carX = 0; 
+	float carY = 0; 
+	float carZ = 0;
+	float tmp = 0;
+	float tmp_pi = 0;
+	std::vector<Model> floor = loadModel("models/test3.obj");
+	std::vector<Model> car = loadModel("models/car.obj");
+	glfwSetTime(0); 
 	//Główna pętla
-	float camera_x = 0; 
-	float camera_y = 0; 
-	float camera_z = 0;
-	glfwSetTime(0); //Zeruj timer
 	while (!glfwWindowShouldClose(window)) //Tak długo jak okno nie powinno zostać zamknięte
 	{
-		std::cout << camera_x << " " << camera_y << " " << camera_z << std::endl;
-		camera_x += speed_x * glfwGetTime(); 
-		camera_y += speed_y * glfwGetTime(); 
-		camera_z += speed_z * glfwGetTime(); 
+		
+		carX += speed_x * glfwGetTime();
+		carY += speed_y * glfwGetTime();
+		carZ += speed_z * glfwGetTime();
+		tmp += angle_y * glfwGetTime();
+		tmp_pi = tmp / 3.14;
+		//std::cout << "KAMERA | x: " << carX << " | y: " << carY << " | z: " << carZ << " || MODEL: kat rotacji = ";
+		//std::cout << tmp/3.14*90 << " stopni." << std::endl;
 		glfwSetTime(0); //Zeruj timer
-		drawScene(window, camera_x, camera_y, camera_z); //Wykonaj procedurę rysującą
+		drawScene(window, carX, carY, carZ, tmp, floor, car); //Wykonaj procedurę rysującą
 		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
 	}
 
