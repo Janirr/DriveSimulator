@@ -38,42 +38,56 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 
 float aspectRatio = 1;
 GLuint tex;
+GLuint carTexture;
 
-float speed_x = 0;
-float speed_y = 0;
-float speed_z = 0;
-float angle_y = 0;
-float speed = 25;
+double carSpeed = 0;
+double speed_y = 0;
+double speed_z = 0;
+double angle_y = 0;
+double speed = 5;
 // Camera
-float cameraDistance = 20;
-float cameraAngle = 0;
-float cameraHeight = 5;
+double cameraDistance = 20;
+double cameraAngle = 0;
+double cameraHeight = 5;
+
 
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
 }
 
+bool isAccelerating = false;
+bool isDecelerating = false;
 
+double acceleration = 0.2f;
+double backAcceleration = 0.1f;
+double noGasDeceleration = 0.05f;
+double deceleration = 0.3f;
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (action == GLFW_PRESS) {
-		if (key == GLFW_KEY_LEFT) { speed_z = speed; angle_y = 0.5f; }// tutaj obrocw lewo
-		if (key == GLFW_KEY_RIGHT){ speed_z = -speed; angle_y = -0.5f; }// tutaj obroc w prawo
-		if (key == GLFW_KEY_UP) speed_x = -speed;
-		if (key == GLFW_KEY_DOWN) speed_x = speed;
-		if (key == GLFW_KEY_X) speed_y = -speed;
-		if (key == GLFW_KEY_Z) speed_y = speed;
-		if (key == GLFW_KEY_KP_SUBTRACT) cameraDistance -= 5;
-		if (key == GLFW_KEY_KP_ADD) cameraDistance += 5;
+	if (key == GLFW_KEY_LEFT) {
+		if (action == GLFW_PRESS) angle_y = 0.5f;
+		else if (action == GLFW_RELEASE) angle_y = 0;
 	}
-	if (action == GLFW_RELEASE) {
-		if (key == GLFW_KEY_LEFT) speed_z = 0; angle_y = 0;
-		if (key == GLFW_KEY_RIGHT) speed_z = 0; angle_y = 0;
-		if (key == GLFW_KEY_UP) speed_x = 0;
-		if (key == GLFW_KEY_DOWN) speed_x = 0;
-		if (key == GLFW_KEY_X) speed_y = 0;
-		if (key == GLFW_KEY_Z) speed_y = 0;
+	if (key == GLFW_KEY_RIGHT) {
+		if (action == GLFW_PRESS) angle_y = -0.5f;
+		else if (action == GLFW_RELEASE) angle_y = 0;
+	}
+	if (key == GLFW_KEY_UP) {
+		if (action == GLFW_PRESS) {
+			isAccelerating = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			isAccelerating = false;
+		}
+	}
+	if (key == GLFW_KEY_DOWN) {
+		if (action == GLFW_PRESS) {
+			isDecelerating = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			isDecelerating = false;
+		}
 	}
 }
 
@@ -109,48 +123,38 @@ public:
 	std::vector<unsigned int> indices;
 };
 
-std::vector<Model> loadModel(std::string plik) 
-{
+std::vector<Model> loadModel(std::string plik) {
 	using namespace std;
-	vector <Model> models;
-	
-	vector<glm::vec4> modelVerts;
-	vector<glm::vec4> modelColors;
-	vector<glm::vec4> modelNormals;
-	vector<glm::vec2> modelTexCoords;
-	vector<unsigned int> modelIndices;
+	vector<Model> models;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(plik, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
 	cout << importer.GetErrorString() << endl << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
-	
-	for (int k = 0; k < scene->mNumMeshes; k++) 
-	{
+
+	for (int k = 0; k < scene->mNumMeshes; k++) {
 		Model model;
 		aiMesh* mesh = scene->mMeshes[k];
-		//cout << "Vertices: " << mesh->mNumVertices << endl << "Faces: " << mesh->mNumFaces << endl << "Texture channels: " << mesh->GetNumUVChannels() << endl << "Color channels: " << mesh->GetNumColorChannels() << endl;
-		for (int i = 0; i < mesh->mNumVertices; i++) 
-		{
-			aiVector3D vertex = mesh->mVertices[i]; // aiVector3D podobny do glm::vec3
+		vector<glm::vec4> modelVerts;
+		vector<glm::vec4> modelColors;
+		vector<glm::vec4> modelNormals;
+		vector<glm::vec2> modelTexCoords;
+		vector<unsigned int> modelIndices;
+
+		for (int i = 0; i < mesh->mNumVertices; i++) {
+			aiVector3D vertex = mesh->mVertices[i];
 			modelVerts.push_back(glm::vec4(vertex.x, vertex.y, vertex.z, 1));
-			aiVector3D normal = mesh->mNormals[i]; // Wektory znormalizowane
-			modelNormals.push_back(glm::vec4(normal.x, normal.y, normal.z, 0)); // 0, bo wektor
-			unsigned int liczba_zest = mesh->GetNumUVChannels(); // liczba zdefiniowanych zestawów wsp. teksturowania (zestawów jest max 8)
-			unsigned int wymiar_wsp_tex = mesh->mNumUVComponents[0]; // Liczba składowych wsp. teksturowania dla 0 zestawu.
-			if (liczba_zest > 0 && wymiar_wsp_tex > 0) 
-			{
-				aiVector3D texCoord = mesh->mTextureCoords[0][i]; // 0 to numer zestawu współrzędnych teksturowania
-				modelTexCoords.push_back(glm::vec2(texCoord.x, texCoord.y)); // x,y,z wykorzystywane jako u,v,w. 0 jeżeli tekstura ma mniej wymiarów
+			aiVector3D normal = mesh->mNormals[i];
+			modelNormals.push_back(glm::vec4(normal.x, normal.y, normal.z, 0));
+			unsigned int liczba_zest = mesh->GetNumUVChannels();
+			unsigned int wymiar_wsp_tex = mesh->mNumUVComponents[0];
+			if (liczba_zest > 0 && wymiar_wsp_tex > 0) {
+				aiVector3D texCoord = mesh->mTextureCoords[0][i];
+				modelTexCoords.push_back(glm::vec2(texCoord.x, texCoord.y));
 			}
 		}
 
-		//dla każdego wielokąta składowego
-		for (int i = 0; i < mesh->mNumFaces; i++) 
-		{
-			aiFace& face = mesh->mFaces[i]; //face to jeden z wielokątów siatki
-			//dla każdego indeksu->wierzchołka tworzącego wielokąt
-			//dla aiProcess_Triangulate to zawsze będzie 3
-			for (int j = 0; j < face.mNumIndices; j++) 
-			{
+		for (int i = 0; i < mesh->mNumFaces; i++) {
+			aiFace& face = mesh->mFaces[i];
+			for (int j = 0; j < face.mNumIndices; j++) {
 				modelIndices.push_back(face.mIndices[j]);
 			}
 		}
@@ -173,19 +177,18 @@ void windowResizeCallback(GLFWwindow* window, int width, int height) {
 //Procedura inicjująca
 void initOpenGLProgram(GLFWwindow* window) {
     initShaders();
-	//************Tutaj umieszczaj kod, który należy wykonać raz, na początku programu************
 	glClearColor(0, 0, 0, 1); //Ustaw kolor czyszczenia bufora kolorów
 	glEnable(GL_DEPTH_TEST); //Włącz test głębokości na pikselach
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetWindowSizeCallback(window, windowResizeCallback);
 	tex = readTexture("models/textures/trasa.png");
+	carTexture = readTexture("models/textures/mclaren.png");
 }
 
 
 //Zwolnienie zasobów zajętych przez program
 void freeOpenGLProgram(GLFWwindow* window) {
     freeShaders();
-    //************Tutaj umieszczaj kod, który należy wykonać po zakończeniu pętli głównej************
 	glDeleteTextures(1, &tex);
 }
 
@@ -209,30 +212,30 @@ void kostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 	glDisableVertexAttribArray(spColored->a("color"));
 }
 
-void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models) {
-	spTextured->use();
-	std::cout << models.size() << std::endl;
+void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models, GLuint texture) {
+	spLambertTextured->use();
+	//std::cout << models.size() << std::endl;
 	for (int i = 0; i < models.size(); i++) 
 	{
-		glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
-		glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
-		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
+		glUniformMatrix4fv(spLambertTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
+		glUniformMatrix4fv(spLambertTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
+		glUniformMatrix4fv(spLambertTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
 		// Przypisz dane
-		glEnableVertexAttribArray(spTextured->a("vertex"));  // Włącz atrybut vertex
-		glVertexAttribPointer(spTextured->a("vertex"), 4, GL_FLOAT, false, 0, models[i].verts.data());
-		glEnableVertexAttribArray(spTextured->a("normal"));  // Włącz atrybut normal
-		glVertexAttribPointer(spTextured->a("normal"), 4, GL_FLOAT, false, 0, models[i].normals.data());
-		glEnableVertexAttribArray(spTextured->a("texCoord"));  // Włącz atrybut texCoord
-		glVertexAttribPointer(spTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
+		glEnableVertexAttribArray(spLambertTextured->a("vertex"));  // Włącz atrybut vertex
+		glVertexAttribPointer(spLambertTextured->a("vertex"), 4, GL_FLOAT, false, 0, models[i].verts.data());
+		glEnableVertexAttribArray(spLambertTextured->a("normal"));  // Włącz atrybut normal
+		glVertexAttribPointer(spLambertTextured->a("normal"), 4, GL_FLOAT, false, 0, models[i].normals.data());
+		glEnableVertexAttribArray(spLambertTextured->a("texCoord"));  // Włącz atrybut texCoord
+		glVertexAttribPointer(spLambertTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tex);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glGenerateMipmap(GL_TEXTURE_2D);
-		glUniform1i(spTextured->u("tex"), 0);
+		glUniform1i(spLambertTextured->u("tex"), 0);
 		glDrawElements(GL_TRIANGLES, models[i].indices.size(), GL_UNSIGNED_INT, models[i].indices.data());
 		// Clear vertex attribute state
-		glDisableVertexAttribArray(spTextured->a("vertex"));  // Disable vertex attribute
-		glDisableVertexAttribArray(spTextured->a("normal"));  // Disable normal attribute
-		glDisableVertexAttribArray(spTextured->a("texCoord"));  // Disable normal attribute
+		glDisableVertexAttribArray(spLambertTextured->a("vertex"));  // Disable vertex attribute
+		glDisableVertexAttribArray(spLambertTextured->a("normal"));  // Disable normal attribute
+		glDisableVertexAttribArray(spLambertTextured->a("texCoord"));  // Disable normal attribute
 	}
 	
 }
@@ -250,26 +253,25 @@ void printMatrix(const glm::mat4& matrix) {
 //Procedura rysująca zawartość sceny
 void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float angle_y, std::vector<Model> floor, std::vector<Model> car) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Wyczyść bufor koloru i bufor głębokości
-	glm::vec3 lookPoint = glm::vec3(carX - cameraDistance, carY, carZ);
+	glm::vec3 lookPoint = glm::vec3(carX + cameraDistance, carY, carZ);
 	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f); //Wylicz macierz rzutowania
 	glm::mat4 V = glm::lookAt(
-		glm::vec3(carX, cameraHeight, carZ),  // Pozycja kamery
-		lookPoint,  // Punkt patrzenia
+		glm::vec3(carX, cameraHeight, carZ),  // Pozycja kamery NIE GIT
+		lookPoint,
 		glm::vec3(0, 1, 0));
-	// Rysowanie kostki
+	// Rysowanie samochodu
 	glm::mat4 M = glm::mat4(1.0f);
 	M = glm::translate(M, lookPoint);
 	//V = glm::rotate(M, angle_y, glm::vec3(0, 1, 0));
-	M = glm::rotate(M, -PI/2+angle_y, glm::vec3(0, 1, 0));
-	
-	//printMatrix(M);
-	drawModel(P, V, M, car);
+	M = glm::rotate(M, PI/2+angle_y, glm::vec3(0, 1, 0));
+	drawModel(P, V, M, car, carTexture);
 	//kostka(P, V, M);
+	
 	// Rysowanie terenu
 	M = glm::mat4(1.0f); //Macierz jednostkowa
 	M = glm::translate(M, glm::vec3(0, -3, 0)); // OBNIZENIE POZIOMU TERENU
-	drawModel(P, V, M, floor); //Rysowanie terenu
-	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego
+	drawModel(P, V, M, floor, tex); //Rysowanie terenu
+	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego  aha xd
 }
 
 
@@ -302,22 +304,38 @@ int main(void)
 	float tmp = 0;
 	float tmp_pi = 0;
 	std::vector<Model> floor = loadModel("models/test3.obj");
-	std::vector<Model> car = loadModel("models/car.obj");
-	glfwSetTime(0); 
+	std::vector<Model> car = loadModel("models/source/mercedesf1.obj");
+	double prevTime = glfwGetTime();
+
 	//Główna pętla
-	while (!glfwWindowShouldClose(window)) //Tak długo jak okno nie powinno zostać zamknięte
-	{
-		
-		carX += speed_x * glfwGetTime();
+	while (!glfwWindowShouldClose(window)) {
+		// Wyliczanie pozycji samochodu i kamery
+		if (isAccelerating) {
+			carSpeed += acceleration;
+		}
+		if (isDecelerating) {
+			carSpeed -= deceleration;
+		}
+		if (!isAccelerating && !isDecelerating) {
+			if (carSpeed > 0) {
+				carSpeed -= noGasDeceleration;
+				if (carSpeed < 1) {
+					carSpeed = 0;
+				}
+			}
+			if (carSpeed < 0) {
+				carSpeed += backAcceleration;
+			}
+		}
+		carX += carSpeed * glfwGetTime();
 		carY += speed_y * glfwGetTime();
 		carZ += speed_z * glfwGetTime();
 		tmp += angle_y * glfwGetTime();
 		tmp_pi = tmp / 3.14;
-		//std::cout << "KAMERA | x: " << carX << " | y: " << carY << " | z: " << carZ << " || MODEL: kat rotacji = ";
-		//std::cout << tmp/3.14*90 << " stopni." << std::endl;
-		glfwSetTime(0); //Zeruj timer
-		drawScene(window, carX, carY, carZ, tmp, floor, car); //Wykonaj procedurę rysującą
-		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
+		glfwSetTime(0); // Zeruj timer
+		std::cout << carSpeed << std::endl;
+		drawScene(window, carX, carY, carZ, tmp, floor, car); // Wykonaj procedurę rysującą
+		glfwPollEvents(); // Wykonaj procedury callback w zależności od zdarzeń jakie zaszły.
 	}
 
 	freeOpenGLProgram(window);
