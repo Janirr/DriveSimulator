@@ -39,16 +39,26 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 float aspectRatio = 1;
 GLuint tex;
 GLuint carTexture;
+GLuint treeTexture;
+GLuint buildingTexture;
 
 double carSpeed = 0;
 double speed_y = 0;
-double speed_z = 0;
 double angle_y = 0;
-double speed = 5;
+
 // Camera
 double cameraDistance = 20;
 double cameraAngle = 0;
 double cameraHeight = 5;
+
+// Car
+bool isAccelerating = false;
+bool isDecelerating = false;
+
+double acceleration = 0.2f;
+double backAcceleration = 0.05f;
+double noGasDeceleration = 0.05f;
+double deceleration = 1.2f;
 
 
 //Procedura obsługi błędów
@@ -56,13 +66,6 @@ void error_callback(int error, const char* description) {
 	fputs(description, stderr);
 }
 
-bool isAccelerating = false;
-bool isDecelerating = false;
-
-double acceleration = 0.2f;
-double backAcceleration = 0.1f;
-double noGasDeceleration = 0.05f;
-double deceleration = 0.8f;
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_LEFT) {
@@ -89,6 +92,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			isDecelerating = false;
 		}
 	}
+
 }
 
 GLuint readTexture(const char* filename) {
@@ -107,9 +111,17 @@ GLuint readTexture(const char* filename) {
 	//Wczytaj obrazek do pamięci KG skojarzonej z uchwytem
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
 		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
+	float maxAnisotropy;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
+
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
 
 	return tex;
 }
@@ -128,7 +140,8 @@ std::vector<Model> loadModel(std::string plik) {
 	vector<Model> models;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(plik, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
-	cout << importer.GetErrorString() << endl << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
+	cout << importer.GetErrorString() << endl;
+	cout << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
 
 	for (int k = 0; k < scene->mNumMeshes; k++) {
 		Model model;
@@ -144,6 +157,13 @@ std::vector<Model> loadModel(std::string plik) {
 			modelVerts.push_back(glm::vec4(vertex.x, vertex.y, vertex.z, 1));
 			aiVector3D normal = mesh->mNormals[i];
 			modelNormals.push_back(glm::vec4(normal.x, normal.y, normal.z, 0));
+			aiColor4D color;
+			if (mesh->HasVertexColors(0)) {
+				color = mesh->mColors[0][i];
+			} else {
+				color = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f); // Domyślny kolor, jeśli brak kolorów wierzchołków
+			}
+			modelColors.push_back(glm::vec4(color.r, color.g, color.b, color.a));
 			unsigned int liczba_zest = mesh->GetNumUVChannels();
 			unsigned int wymiar_wsp_tex = mesh->mNumUVComponents[0];
 			if (liczba_zest > 0 && wymiar_wsp_tex > 0) {
@@ -183,6 +203,8 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glfwSetWindowSizeCallback(window, windowResizeCallback);
 	tex = readTexture("models/textures/trasa.png");
 	carTexture = readTexture("models/textures/mclaren.png");
+	buildingTexture = readTexture("models/textures/budowla.png");
+	treeTexture = readTexture("models/textures/drzewo.png");
 }
 
 
@@ -190,6 +212,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 void freeOpenGLProgram(GLFWwindow* window) {
     freeShaders();
 	glDeleteTextures(1, &tex);
+	glDeleteTextures(1, &carTexture);
 }
 
 
@@ -214,7 +237,6 @@ void kostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 
 void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models, GLuint texture) {
 	spLambertTextured->use();
-	//std::cout << models.size() << std::endl;
 	for (int i = 0; i < models.size(); i++) 
 	{
 		glUniformMatrix4fv(spLambertTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
@@ -228,53 +250,123 @@ void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models,
 		glEnableVertexAttribArray(spLambertTextured->a("texCoord"));  // Włącz atrybut texCoord
 		glVertexAttribPointer(spLambertTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
 		glActiveTexture(GL_TEXTURE0);
-		glTexParameteri(GL_TEXTURE_2D,
-			GL_TEXTURE_WRAP_S,
-			GL_MIRRORED_REPEAT);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glGenerateMipmap(GL_TEXTURE_2D);
-		glUniform1i(spLambertTextured->u("tex"), 0);
+
 		glDrawElements(GL_TRIANGLES, models[i].indices.size(), GL_UNSIGNED_INT, models[i].indices.data());
-		// Clear vertex attribute state
-		glDisableVertexAttribArray(spLambertTextured->a("vertex"));  // Disable vertex attribute
-		glDisableVertexAttribArray(spLambertTextured->a("normal"));  // Disable normal attribute
-		glDisableVertexAttribArray(spLambertTextured->a("texCoord"));  // Disable normal attribute
+		
+		glDisableVertexAttribArray(spLambertTextured->a("vertex")); 
+		glDisableVertexAttribArray(spLambertTextured->a("normal")); 
+		glDisableVertexAttribArray(spLambertTextured->a("texCoord"));
 	}
-	
 }
 
-void printMatrix(const glm::mat4& matrix) {
-	std::cout << "--------------" << std::endl;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			std::cout << matrix[i][j] << " ";
-		}
-		std::cout << std::endl;
+bool checkCollision(float carX, float carY, float carZ) {
+	glm::vec3 treePosition = glm::vec3(80, 0, 80);
+	glm::vec3 buildingPosition = glm::vec3(20, 0, 10);
+	float collisionDistanceThresholdTree = 1.5f; // Próg odległości kolizji dla drzewa
+	float collisionDistanceThresholdTower = 8.5f; // Próg odległości kolizji dla budynku
+	glm::vec3 carPosition = glm::vec3(carX, carY, carZ);
+	glm::vec3 deltaTree = carPosition - treePosition;
+	glm::vec3 deltaTower = carPosition - buildingPosition;
+	std::cout << "Tree dist: " << glm::length(deltaTree) << " || " ;
+	std::cout << "Building dist: " << glm::length(deltaTower) << " || ";
+	if (glm::length(deltaTree) < collisionDistanceThresholdTree || glm::length(deltaTower) < collisionDistanceThresholdTower) {
+		return true;
+	}
+	else {
+		return false;
 	}
 }
+void texKostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
+	float myCubeTexCoords[] = {
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+
+		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
+		4.0f, 0.0f,   4.0f, 4.0f,    0.0f, 4.0f,
+	};
+	spTextured->use(); //Aktywuj program cieniujący
+
+	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
+	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
+	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
+
+	glEnableVertexAttribArray(spTextured->a("vertex"));
+	glVertexAttribPointer(spTextured->a("vertex"), 4, GL_FLOAT, false, 0, myCubeVertices); //Współrzędne wierzchołków bierz z tablicy myCubeVertices
+
+	glEnableVertexAttribArray(spTextured->a("texCoord"));
+	glVertexAttribPointer(spTextured->a("texCoord"), 2, GL_FLOAT, false, 0, myCubeTexCoords); //Współrzędne teksturowania bierz z tablicy myCubeTexCoords
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(spTextured->u("tex"), 0);
+
+	glDrawArrays(GL_TRIANGLES, 18, 6);
+
+	glDisableVertexAttribArray(spTextured->a("vertex"));
+	glDisableVertexAttribArray(spTextured->a("color"));
+}
+
+
+glm::vec3 treePosition = glm::vec3(80, 0, 80);
+glm::vec3 buildingPosition = glm::vec3(20, 0, 10);
 
 //Procedura rysująca zawartość sceny
-void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float carAngle, std::vector<Model> floor, std::vector<Model> car) {
+void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float carAngle, std::vector<Model> floor, std::vector<Model> car, std::vector<Model> tree, std::vector<Model> building) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Wyczyść bufor koloru i bufor głębokości
-	glm::vec3 lookPoint = glm::vec3(carX + cameraDistance, carY, carZ);
-	glm::vec3 cameraPosition = glm::vec3(carX, cameraHeight, carZ);
-	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f); //Wylicz macierz rzutowania
+	glm::vec3 lookPoint = glm::vec3(carX, carY, carZ);
+	glm::vec3 carPosition = glm::vec3(carX, carY, carZ);
+	glm::vec3 cameraPosition = glm::vec3(carX - cameraDistance * sin(carAngle), cameraHeight,carZ - cameraDistance * cos(carAngle));
+	//std::cout << "CAMERA POSITION: " << cameraPosition.x << " " << cameraPosition.y << " " << cameraPosition.z << " || ";
+
+	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f);
 	glm::mat4 V = glm::lookAt(
-		cameraPosition,  // Pozycja kamery NIE GIT
+		cameraPosition,
 		lookPoint,
-		glm::vec3(0, 1, 0));
+		glm::vec3(0, 1, 0)
+	);
 
 	// Rysowanie samochodu
 	glm::mat4 M = glm::mat4(1.0f);
 	M = glm::translate(M, lookPoint);
-	M = glm::rotate(M, PI/2+carAngle, glm::vec3(0, 1, 0));
+	M = glm::rotate(M, carAngle, glm::vec3(0, 1, 0));
+	if (checkCollision(carX, carY, carZ)) {
+		M = glm::rotate(M, carAngle, glm::vec3(1, 0, 0));
+	};
 	drawModel(P, V, M, car, carTexture);
+
+	// Rysowanie drzewa
+	M = glm::mat4(1.0f);
+	M = glm::translate(M, treePosition); // Pozycja drzewa w świecie
+	drawModel(P, V, M, tree, treeTexture);
+
+	// Rysowanie budynku
+	M = glm::mat4(1.0f); // Macierz jednostkowa
+	M = glm::translate(M, buildingPosition); // Pozycja budowli w świecie
+	M = glm::translate(M, glm::vec3(0, -0.4f, 0));
+	M = glm::scale(M, glm::vec3(5.5f, 5.5f, 5.5f));
+	drawModel(P, V, M, building, buildingTexture);
 	
 	// Rysowanie terenu
 	M = glm::mat4(1.0f); //Macierz jednostkowa
-	M = glm::translate(M, glm::vec3(0, -3, 0)); // OBNIZENIE POZIOMU TERENU
-	drawModel(P, V, M, floor, tex); //Rysowanie terenu
-	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego  aha xd
+	M = glm::translate(M, glm::vec3(0, -1.3f, 0)); // obnizenie terenu
+	M = glm::scale(M, glm::vec3(100, 1, 100)); // Skalowanie terenu
+	texKostka(P, V, M);
+
+	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego
 }
 
 
@@ -307,16 +399,20 @@ int main(void)
 	float carAngle = 0;
 	std::vector<Model> floor = loadModel("models/test3.obj");
 	std::vector<Model> car = loadModel("models/car.obj");
+	std::vector<Model> tree = loadModel("models/tree.obj");
+	std::vector<Model> building = loadModel("models/building.obj");
 	double prevTime = glfwGetTime();
 
 	//Główna pętla
 	while (!glfwWindowShouldClose(window)) {
-		// Wyliczanie pozycji samochodu i kamery
 		if (isAccelerating) {
 			carSpeed += acceleration;
 		}
 		if (isDecelerating) {
-			carSpeed -= deceleration;
+			if (carSpeed > 0) {
+				carSpeed -= deceleration;
+			} 
+			if (carSpeed > -20) carSpeed -= backAcceleration;
 		}
 		if (!isAccelerating && !isDecelerating) {
 			if (carSpeed > 0) {
@@ -331,13 +427,17 @@ int main(void)
 		}
 		// Wyliczamy X i Z
 		carAngle += angle_y * glfwGetTime();
-		carX += carSpeed * cos(carAngle) * glfwGetTime();
+		carX += carSpeed * sin(carAngle) * glfwGetTime();
 		carY += speed_y * glfwGetTime();
-		carZ += carSpeed * sin(-carAngle) * glfwGetTime();
-		std::cout << carX << " " << carY << " " << carZ << " || " << carSpeed << std::endl;
+		carZ += carSpeed * cos(carAngle) * glfwGetTime();
+		std::cout << "CAR: " <<  carX << " " << carY << " " << carZ << " || SPEED: " << carSpeed << " units/sec " <<  std::endl;
 		
 		glfwSetTime(0); // Zeruj timer
-		drawScene(window, carX, carY, carZ, carAngle, floor, car); // Wykonaj procedurę rysującą
+		drawScene(window, carX, carY, carZ, carAngle, floor, car, tree, building); // Wykonaj procedurę rysującą
+
+		if (checkCollision(carX, carY, carZ)) { 
+			carSpeed = 0;
+		};
 		glfwPollEvents(); // Wykonaj procedury callback w zależności od zdarzeń jakie zaszły.
 	}
 
