@@ -41,17 +41,18 @@ GLuint tex;
 GLuint carTexture;
 GLuint treeTexture;
 GLuint buildingTexture;
+GLuint skyTexture;
 
 double carSpeed = 0;
 double speed_y = 0;
 double angle_y = 0;
 
-// Camera
+// Kamera
 double cameraDistance = 20;
 double cameraAngle = 0;
 double cameraHeight = 5;
 
-// Car
+// Samochód
 bool isAccelerating = false;
 bool isDecelerating = false;
 
@@ -141,7 +142,7 @@ std::vector<Model> loadModel(std::string plik) {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(plik, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
 	cout << importer.GetErrorString() << endl;
-	cout << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
+	cout << "plik: " << plik << endl << "Meshes: " << scene->mNumMeshes << endl << "Materials: " << scene->mNumMaterials << endl << "Textures: " << scene->mNumTextures << endl << "Lights: " << scene->mNumLights << endl << "Cameras: " << scene->mNumCameras << endl;
 
 	for (int k = 0; k < scene->mNumMeshes; k++) {
 		Model model;
@@ -166,7 +167,7 @@ std::vector<Model> loadModel(std::string plik) {
 			modelColors.push_back(glm::vec4(color.r, color.g, color.b, color.a));
 			unsigned int liczba_zest = mesh->GetNumUVChannels();
 			unsigned int wymiar_wsp_tex = mesh->mNumUVComponents[0];
-			if (liczba_zest > 0 && wymiar_wsp_tex > 0) {
+			if (liczba_zest > 0 && wymiar_wsp_tex > 0) { // Jeżeli mesh zawiera koordynaty tekstury
 				aiVector3D texCoord = mesh->mTextureCoords[0][i];
 				modelTexCoords.push_back(glm::vec2(texCoord.x, texCoord.y));
 			}
@@ -205,6 +206,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 	carTexture = readTexture("models/textures/mclaren.png");
 	buildingTexture = readTexture("models/textures/budowla.png");
 	treeTexture = readTexture("models/textures/drzewo.png");
+	skyTexture = readTexture("models/textures/sky.png");
 }
 
 
@@ -213,71 +215,43 @@ void freeOpenGLProgram(GLFWwindow* window) {
     freeShaders();
 	glDeleteTextures(1, &tex);
 	glDeleteTextures(1, &carTexture);
+	glDeleteTextures(1, &buildingTexture);
+	glDeleteTextures(1, &treeTexture);
 }
 
 
-void kostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-	spColored->use(); //Aktywuj program cieniujący
+glm::vec3 treePosition = glm::vec3(80, 0, 80);
+glm::vec3 tree2Position = glm::vec3(-20, 0, 20);
+glm::vec3 tree3Position = glm::vec3(-40, 0, -40);
+glm::vec3 buildingPosition = glm::vec3(20, 0, 10);
 
-	glUniformMatrix4fv(spColored->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
-	glUniformMatrix4fv(spColored->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
-	glUniformMatrix4fv(spColored->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
+std::vector<std::pair<glm::vec3, float>> objectData = {
+	{treePosition, 1.5f}, // Drzewo 1
+	{tree2Position, 1.5f}, // Drzewo 2
+	{tree3Position, 1.5f}, // Drzewo 3
+	{buildingPosition, 8.5f}, // Budynek
+};
 
-	glEnableVertexAttribArray(spColored->a("vertex"));
-	glVertexAttribPointer(spColored->a("vertex"), 4, GL_FLOAT, false, 0, myCubeVertices); //Współrzędne wierzchołków bierz z tablicy birdVertices
-
-	glEnableVertexAttribArray(spColored->a("color"));
-	glVertexAttribPointer(spColored->a("color"), 4, GL_FLOAT, false, 0, myCubeColors); //Współrzędne wierzchołków bierz z tablicy birdColors
-
-	glDrawArrays(GL_TRIANGLES, 0, myCubeVertexCount);
-
-	glDisableVertexAttribArray(spColored->a("vertex"));
-	glDisableVertexAttribArray(spColored->a("color"));
-}
-
-void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models, GLuint texture) {
-	spLambertTextured->use();
-	for (int i = 0; i < models.size(); i++) 
-	{
-		glUniformMatrix4fv(spLambertTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
-		glUniformMatrix4fv(spLambertTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
-		glUniformMatrix4fv(spLambertTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
-		// Przypisz dane
-		glEnableVertexAttribArray(spLambertTextured->a("vertex"));  // Włącz atrybut vertex
-		glVertexAttribPointer(spLambertTextured->a("vertex"), 4, GL_FLOAT, false, 0, models[i].verts.data());
-		glEnableVertexAttribArray(spLambertTextured->a("normal"));  // Włącz atrybut normal
-		glVertexAttribPointer(spLambertTextured->a("normal"), 4, GL_FLOAT, false, 0, models[i].normals.data());
-		glEnableVertexAttribArray(spLambertTextured->a("texCoord"));  // Włącz atrybut texCoord
-		glVertexAttribPointer(spLambertTextured->a("texCoord"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glDrawElements(GL_TRIANGLES, models[i].indices.size(), GL_UNSIGNED_INT, models[i].indices.data());
-		
-		glDisableVertexAttribArray(spLambertTextured->a("vertex")); 
-		glDisableVertexAttribArray(spLambertTextured->a("normal")); 
-		glDisableVertexAttribArray(spLambertTextured->a("texCoord"));
-	}
-}
-
-bool checkCollision(float carX, float carY, float carZ) {
-	glm::vec3 treePosition = glm::vec3(80, 0, 80);
-	glm::vec3 buildingPosition = glm::vec3(20, 0, 10);
-	float collisionDistanceThresholdTree = 1.5f; // Próg odległości kolizji dla drzewa
-	float collisionDistanceThresholdTower = 8.5f; // Próg odległości kolizji dla budynku
+bool checkCollision(float carX, float carY, float carZ, const std::vector<std::pair<glm::vec3, float>>& objectData) {
 	glm::vec3 carPosition = glm::vec3(carX, carY, carZ);
-	glm::vec3 deltaTree = carPosition - treePosition;
-	glm::vec3 deltaTower = carPosition - buildingPosition;
-	std::cout << "Tree dist: " << glm::length(deltaTree) << " || " ;
-	std::cout << "Building dist: " << glm::length(deltaTower) << " || ";
-	if (glm::length(deltaTree) < collisionDistanceThresholdTree || glm::length(deltaTower) < collisionDistanceThresholdTower) {
-		return true;
+
+	for (const auto& data : objectData) {
+		const glm::vec3& objectPosition = data.first;
+		float collisionDistanceThreshold = data.second;
+
+		glm::vec3 delta = carPosition - objectPosition;
+		float distance = glm::length(delta);
+
+		//std::cout << distance << " | ";
+
+		if (distance < collisionDistanceThreshold) {
+			return true;
+		}
 	}
-	else {
-		return false;
-	}
+
+	return false;
 }
+
 void texKostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 	float myCubeTexCoords[] = {
 		4.0f, 0.0f,	  0.0f, 4.0f,    0.0f, 0.0f,
@@ -320,32 +294,61 @@ void texKostka(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 	glDisableVertexAttribArray(spTextured->a("color"));
 }
 
+void drawModel(glm::mat4 P, glm::mat4 V, glm::mat4 M, std::vector<Model> models, GLuint texture) {
+	spLambertTextured->use();
+	for (int i = 0; i < models.size(); i++)
+	{
+		glUniformMatrix4fv(spLambertTextured->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
+		glUniformMatrix4fv(spLambertTextured->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
+		glUniformMatrix4fv(spLambertTextured->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
+		// Przypisz dane
+		glEnableVertexAttribArray(spLambertTextured->a("vertex"));  // Włącz atrybut vertex
+		glVertexAttribPointer(spLambertTextured->a("vertex"), 4, GL_FLOAT, false, 0, models[i].verts.data());
+		glEnableVertexAttribArray(spLambertTextured->a("normal"));  // Włącz atrybut normal
+		glVertexAttribPointer(spLambertTextured->a("normal"), 4, GL_FLOAT, false, 0, models[i].normals.data());
+		glEnableVertexAttribArray(spLambertTextured->a("color"));  // Włącz atrybut normal
+		glVertexAttribPointer(spLambertTextured->a("color"), 4, GL_FLOAT, false, 0, models[i].colors.data());
+		glEnableVertexAttribArray(spLambertTextured->a("texCoord0"));  // Włącz atrybut texCoord
+		glVertexAttribPointer(spLambertTextured->a("texCoord0"), 2, GL_FLOAT, false, 0, models[i].texCoords.data());
+		glUniform1i(spLambertTextured->u("textureMap0"), 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
-glm::vec3 treePosition = glm::vec3(80, 0, 80);
-glm::vec3 buildingPosition = glm::vec3(20, 0, 10);
+		glUniform1i(spLambertTextured->u("textureMap1"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, skyTexture);
+
+		glDrawElements(GL_TRIANGLES, models[i].indices.size(), GL_UNSIGNED_INT, models[i].indices.data());
+
+		glDisableVertexAttribArray(spLambertTextured->a("vertex"));
+		glDisableVertexAttribArray(spLambertTextured->a("normal"));
+		glDisableVertexAttribArray(spLambertTextured->a("color"));
+		glDisableVertexAttribArray(spLambertTextured->a("texCoord"));
+	}
+}
+
+
+
+
 
 //Procedura rysująca zawartość sceny
-void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float carAngle, std::vector<Model> floor, std::vector<Model> car, std::vector<Model> tree, std::vector<Model> building) {
+void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float carAngle, std::vector<Model> floor, std::vector<Model> car, std::vector<Model> tree, std::vector<Model> building, std::vector<Model> track) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Wyczyść bufor koloru i bufor głębokości
-	glm::vec3 lookPoint = glm::vec3(carX, carY, carZ);
 	glm::vec3 carPosition = glm::vec3(carX, carY, carZ);
 	glm::vec3 cameraPosition = glm::vec3(carX - cameraDistance * sin(carAngle), cameraHeight,carZ - cameraDistance * cos(carAngle));
 	//std::cout << "CAMERA POSITION: " << cameraPosition.x << " " << cameraPosition.y << " " << cameraPosition.z << " || ";
 
-	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 0.01f, 1200.0f);
+	glm::mat4 P = glm::perspective(30.0f * PI / 180.0f, aspectRatio, 1.0f, 1200.0f);
 	glm::mat4 V = glm::lookAt(
 		cameraPosition,
-		lookPoint,
+		carPosition,
 		glm::vec3(0, 1, 0)
 	);
 
 	// Rysowanie samochodu
 	glm::mat4 M = glm::mat4(1.0f);
-	M = glm::translate(M, lookPoint);
+	M = glm::translate(M, carPosition);
 	M = glm::rotate(M, carAngle, glm::vec3(0, 1, 0));
-	if (checkCollision(carX, carY, carZ)) {
-		M = glm::rotate(M, carAngle, glm::vec3(1, 0, 0));
-	};
 	drawModel(P, V, M, car, carTexture);
 
 	// Rysowanie drzewa
@@ -353,18 +356,33 @@ void drawScene(GLFWwindow* window, float carX, float carY, float carZ, float car
 	M = glm::translate(M, treePosition); // Pozycja drzewa w świecie
 	drawModel(P, V, M, tree, treeTexture);
 
+	// Rysowanie drzewa
+	M = glm::mat4(1.0f);
+	M = glm::translate(M, tree2Position); // Pozycja drzewa w świecie
+	drawModel(P, V, M, tree, treeTexture);
+
+	// Rysowanie drzewa
+	M = glm::mat4(1.0f);
+	M = glm::translate(M, tree3Position); // Pozycja drzewa w świecie
+	drawModel(P, V, M, tree, treeTexture);
+
 	// Rysowanie budynku
-	M = glm::mat4(1.0f); // Macierz jednostkowa
+	M = glm::mat4(1.0f);
 	M = glm::translate(M, buildingPosition); // Pozycja budowli w świecie
 	M = glm::translate(M, glm::vec3(0, -0.4f, 0));
 	M = glm::scale(M, glm::vec3(5.5f, 5.5f, 5.5f));
 	drawModel(P, V, M, building, buildingTexture);
 	
-	// Rysowanie terenu
-	M = glm::mat4(1.0f); //Macierz jednostkowa
-	M = glm::translate(M, glm::vec3(0, -1.3f, 0)); // obnizenie terenu
-	M = glm::scale(M, glm::vec3(100, 1, 100)); // Skalowanie terenu
+	// Rysowanie terenu dywaniku
+	//M = glm::mat4(1.0f); //Macierz jednostkowa
+	//M = glm::translate(M, glm::vec3(0, -1.3f, 0)); // obnizenie terenu
+	//M = glm::scale(M, glm::vec3(100, 1, 100)); // Skalowanie terenu
 	texKostka(P, V, M);
+
+	// Rysowanie toru
+	M = glm::mat4(1.0f); //Macierz jednostkowa
+	M = glm::translate(M, glm::vec3(0, -0.3f, 0)); // obnizenie terenu
+	drawModel(P, V, M, track, carTexture);
 
 	glfwSwapBuffers(window); //Skopiuj bufor tylny do bufora przedniego
 }
@@ -401,6 +419,7 @@ int main(void)
 	std::vector<Model> car = loadModel("models/car.obj");
 	std::vector<Model> tree = loadModel("models/tree.obj");
 	std::vector<Model> building = loadModel("models/building.obj");
+	std::vector<Model> track = loadModel("models/track.obj");
 	double prevTime = glfwGetTime();
 
 	//Główna pętla
@@ -433,9 +452,9 @@ int main(void)
 		std::cout << "CAR: " <<  carX << " " << carY << " " << carZ << " || SPEED: " << carSpeed << " units/sec " <<  std::endl;
 		
 		glfwSetTime(0); // Zeruj timer
-		drawScene(window, carX, carY, carZ, carAngle, floor, car, tree, building); // Wykonaj procedurę rysującą
+		drawScene(window, carX, carY, carZ, carAngle, floor, car, tree, building, track); // Wykonaj procedurę rysującą
 
-		if (checkCollision(carX, carY, carZ)) { 
+		if (checkCollision(carX, carY, carZ, objectData)) { 
 			carSpeed = 0;
 		};
 		glfwPollEvents(); // Wykonaj procedury callback w zależności od zdarzeń jakie zaszły.
